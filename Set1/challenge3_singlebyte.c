@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
     int stringLen = getLength(argv[1]);
 
     char* xorString= malloc(stringLen+1);
+    xorString[stringLen]='\0';
 
     for(int i=0;i<256;i++)
     {
@@ -25,15 +26,32 @@ int main(int argc, char* argv[])
             xorString[j]=(char)i;
         }
 
-        printf("%d = %s \n",i, binaryToAscii(xorOfBinary(binaryString, asciiToBinary(xorString))));
-        printf("------------------------\n");
+        if(i==65)
+            continue;
+
+        char* xorBinary=asciiToBinary(xorString);
+        char* xorResultBinary=xorOfBinary(binaryString, xorBinary);
+        char* asciiResult= binaryToAscii(xorResultBinary);
+
+        if(englishCheck(asciiResult))
+        {
+            printf("%d = %s \n",i, asciiResult);
+            printf("------------------------\n");
+        }
+
+        free(xorBinary);
+        free(xorResultBinary);
+        free(asciiResult);
     }
 
-    for(int j=0;j<stringLen;j++)
-    {
-        xorString[j]=(char)88;
-    }
+    // for(int j=0;j<stringLen;j++)
+    // {
+    //     xorString[j]=(char)88;
+    // }
 
-    printf("88 = %s \n", binaryToAscii(xorOfBinary(binaryString, asciiToBinary(xorString))));
-    printf("Key = %s \n", xorString);
+    // printf("88 = %s \n", binaryToAscii(xorOfBinary(binaryString, asciiToBinary(xorString))));
+    // printf("Key = %s \n", xorString);
+
+    free(xorString);
+    free(binaryString);
 }
