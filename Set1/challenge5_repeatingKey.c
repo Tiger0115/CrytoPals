@@ -26,9 +26,11 @@ int main(int argc, char* argv[])
     int keyPointer=0;
     while(fgets(line, 51, fptr))
     {
-        // printf("%d \n", strcspn(line, "\n"));
-        line[strcspn(line, "\n")] = '\0'; 
-        line[strcspn(line, "\r")] = '\0';
+
+
+        // i tried all kinds of things to see where i was wrong. 
+        // line[strcspn(line, "\n")] = '\0';  // if you are doing this then this is where you are going wrong
+        // line[strcspn(line, "\r")] = '\0';
         
 
         // printf("%d \n", getLength(line));
@@ -37,7 +39,7 @@ int main(int argc, char* argv[])
         // lineContent = strdup(line);  
         char* lineContent = strdup(line);
 
-        printf("%s \n", lineContent);
+        // printf("%s \n", lineContent);
         // lineContent[lineLength]='\0';
 
         char* keyString=malloc(lineLength+1);
@@ -47,12 +49,12 @@ int main(int argc, char* argv[])
         for(int i=0;i<lineLength;i++)
         {
             keyString[i]=key[keyPointer];
-            printf("%c", keyString[i]);
+            // printf("%c", keyString[i]);
             keyPointer=++keyPointer%keyLength;
         }
         // printf("\n %d \n", keyPointer);
         keyString[lineLength]='\0';
-        printf("\n %d \n", getLength(keyString));
+        // printf("\n%d \n", getLength(keyString));
         char* keyBinary= asciiToBinary(keyString);
 
         char* lineBinary= asciiToBinary(lineContent);
