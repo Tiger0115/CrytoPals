@@ -190,6 +190,16 @@ char* binaryToBase64(char* binary)
     return base64;
 }
 
+char* hexadecimaltoBase64(char* input)
+{
+    char* binary=hexadecimalToBinary(input);
+    char* base64=binaryToBase64(binary);
+
+    free(binary);
+
+    return base64;
+}
+
 int getmax(int one, int two)
 {
     if(one>two)
@@ -250,6 +260,21 @@ char* binaryToHexadecimal(char* binary)
     }
 
     hexResult[output_len]='\0';
+    return hexResult;
+}
+
+char* xorOfHexadecimal(char* input1, char* input2)
+{
+    char* bin1= hexadecimalToBinary(input1);
+    char* bin2= hexadecimalToBinary(input2);
+
+    char* binResult=xorOfBinary(bin1, bin2);
+    char* hexResult= binaryToHexadecimal(binResult);
+
+    free(bin1);
+    free(bin2);
+    free(binResult);
+
     return hexResult;
 }
 
@@ -351,10 +376,71 @@ int englishCheck(char* input)
     }
 
     // Require that a high percentage of characters are printable
-    return (printable >= total * 0.9) ? 1 : 0;
+    return (printable >= total * 0.95) ? 1 : 0;
 }
 
+void printProbableKeyOfSameByte(char* binaryCiphertext, int keyLength )
+{
+    char* key=malloc(keyLength+1);
+    key[keyLength]='\0';
 
+    for(int i=0;i<256;i++)
+    {
+        for(int j=0;j<keyLength;j++)
+        {
+            key[j]=(char)i;
+        }
+
+        char* xorBinary=asciiToBinary(key);
+        char* xorResultBinary=xorOfBinary(binaryCiphertext, xorBinary);
+        char* asciiResult= binaryToAscii(xorResultBinary);
+
+        if(englishCheck(asciiResult))
+        {
+            printf("Plaintext = %s \n", asciiResult);
+            printf("Key = %s \n", key);
+            printf("------------------------\n");
+        }
+
+        free(xorBinary);
+        free(xorResultBinary);
+        free(asciiResult);
+    }
+    free(key);
+}
+
+void printProbableKeyOfSameByteFile(char* filename, int lineSize)
+{
+    FILE* fptr=fopen(filename, "r");
+    if (!fptr) {
+        perror("Error opening file");
+        return;
+    }
+
+    char* line=malloc(lineSize+4);
+
+    
+    int i =0;
+    
+    while(fgets(line, lineSize+4, fptr))
+    {
+        line[strcspn(line, "\n")] = '\0'; 
+
+        char* binary = hexadecimalToBinary(line);       
+
+        printf("Line Number = %d \n", (i+1));
+        printProbableKeyOfSameByte(binary, lineSize);
+        printf("\n\n");        
+        i++;
+
+        free(binary);
+               
+        
+    }
+
+    fclose(fptr);
+    free(line);
+}
 
 char* binaryToHex(char* binary) 
 {
@@ -389,4 +475,110 @@ char* binaryToHex(char* binary)
     hex[paddedLen / 4] = '\0';
     free(paddedBinary);
     return hex;
+}
+
+int base64CharToValue(char c) {
+    if ('A' <= c && c <= 'Z') return c - 'A';
+    if ('a' <= c && c <= 'z') return c - 'a' + 26;
+    if ('0' <= c && c <= '9') return c - '0' + 52;
+    if (c == '+') return 62;
+    if (c == '/') return 63;
+    if (c == '=') return 0; // Padding
+    return -1; // Invalid character
+}
+
+char* base64ToBinary(char* input) {
+    int len = strlen(input);
+    char* binary = malloc(len * 6 + 1); // 6 bits per base64 char
+    if (!binary) {
+        perror("malloc failed");
+        exit(1);
+    }
+
+    binary[0] = '\0'; // initialize as empty string
+
+    for (int i = 0; i < len; i++) {
+        int val = base64CharToValue(input[i]);
+        if (val == -1) continue; // skip invalid characters
+
+        for (int bit = 5; bit >= 0; bit--) {
+            char bitChar = ((val >> bit) & 1) ? '1' : '0';
+            strncat(binary, &bitChar, 1);
+        }
+    }
+
+    return binary;
+}
+
+int computeHammingDistanceOfBinary(char* input1, char* input2)
+{
+    // if(strlen(input1)!= strlen(input2))
+    //     return -1;
+
+    int count=0;
+
+    for(int i=0;i<strlen(input1); i++)
+    {
+        if(input1[i]!=input2[i])
+            count++;
+    }
+
+    return count;
+}
+
+int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int maxKeyLength)
+{
+    double min=10000.0;
+
+    int minKeysize=maxKeyLength;
+
+    FILE* fptr=fopen(filename, "r");
+    if (!fptr) 
+    {
+        perror("Error opening file");
+        return -1;
+    }
+
+
+    char* block= malloc(maxKeyLength*3+1);
+    fread(block, 1, maxKeyLength*3, fptr);
+
+    for(int i=minKeyLength;i<=maxKeyLength;i++)
+    {
+        char* block1=malloc(i+1);
+        char* block2=malloc(i+1);
+
+        memcpy(block1, block, i);
+        memcpy(block2, block+i, i);
+
+        block1[i]='\0';
+        block2[i]='\0';
+        // printf("%s %s \n", block1, block2);
+
+        char* bin1=base64ToBinary(block1);
+        char* bin2=base64ToBinary(block2);
+
+        int sum=computeHammingDistanceOfBinary(bin1, bin2);
+
+        // printf("%d sum = %d\n", i, sum);
+
+        if(sum<min)
+        {
+            min=sum;
+            minKeysize=i;
+        }
+
+
+        free(bin1);
+        free(bin2);
+        free(block1);
+        free(block2);
+
+    }
+    
+
+
+    free(block);
+    fclose(fptr);
+    return minKeysize;
 }

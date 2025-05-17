@@ -6,69 +6,16 @@
 
 int main(int argc, char* argv[])
 {
-    if(argc!=2)
+    if(argc!=3)
     {
         printf("Error in Argument count \n");
         return -1;
     }
 
-    FILE* fptr=fopen(argv[1], "r");
-    if (!fptr) {
-        perror("Error opening file");
-        return -1;
-    }
+    int lineSize= atoi(argv[2]);
+    printProbableKeyOfSameByteFile(argv[1], lineSize);
 
-    char* line=malloc(64);
 
+    printf("Answer is Line 171 (if lines are 1 indexed) \nPlaintext = Now that the party is jumping \nKey = 555555555555555555555555555555555555555555555555555555555555 \n");
     
-    int i =0;
-    char* xorString= malloc(61);
-    xorString[60]='\0';
-    while(fgets(line, 64, fptr))
-    {
-        line[strcspn(line, "\n")] = '\0'; 
-
-        char* binary = hexadecimalToBinary(line);       
-
-        char* ascii = binaryToAscii(binary);
-        
-
-        // printf("%d:\nASCII   = %s\n\n", i++,  ascii);
-
-        
-        for(int k=0;k<256;k++)
-        {
-            for(int j=0;j<60;j++)
-            {
-                xorString[j]=(char)k;
-            }
-
-            char* xorStringBinary = asciiToBinary(xorString);
-            char* result = xorOfBinary(binary, xorStringBinary);
-
-            char* resultAscii =binaryToAscii(result);
-            if(englishCheck(resultAscii)==1)
-            {
-                printf("i=%d k= %d   %s \n", i, k, resultAscii );
-            }
-
-            // free(xorString);
-            free(result);
-            free(resultAscii);
-            
-        }
-        i++;
-
-            free(binary);
-            free(ascii);
-    
-
-            
-        
-    }
-
-    fclose(fptr);
-
-    free(xorString);
-    free(line);
 }

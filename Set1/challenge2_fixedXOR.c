@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     }
 
 
-    char* hexResult=binaryToHexadecimal(xorOfBinary(hexadecimalToBinary(argv[1]), hexadecimalToBinary(argv[2])));
+    char* hexResult=xorOfHexadecimal(argv[1],argv[2]);
     printf("%s \n", hexResult);
 
     free(hexResult);

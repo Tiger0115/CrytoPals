@@ -16,33 +16,33 @@ int main(int argc, char* argv[])
     char* binaryString= hexadecimalToBinary(argv[1]);
     int stringLen = getLength(argv[1]);
 
-    char* xorString= malloc(stringLen+1);
-    xorString[stringLen]='\0';
 
-    for(int i=0;i<256;i++)
-    {
-        for(int j=0;j<stringLen;j++)
-        {
-            xorString[j]=(char)i;
-        }
+    printProbableKeyOfSameByte(binaryString, stringLen);
 
-        if(i==65)
-            continue;
+    // char* xorString= malloc(stringLen+1);
+    // xorString[stringLen]='\0';
 
-        char* xorBinary=asciiToBinary(xorString);
-        char* xorResultBinary=xorOfBinary(binaryString, xorBinary);
-        char* asciiResult= binaryToAscii(xorResultBinary);
+    // for(int i=0;i<256;i++)
+    // {
+    //     for(int j=0;j<stringLen;j++)
+    //     {
+    //         xorString[j]=(char)i;
+    //     }
 
-        if(englishCheck(asciiResult))
-        {
-            printf("%d = %s \n",i, asciiResult);
-            printf("------------------------\n");
-        }
+    //     char* xorBinary=asciiToBinary(xorString);
+    //     char* xorResultBinary=xorOfBinary(binaryString, xorBinary);
+    //     char* asciiResult= binaryToAscii(xorResultBinary);
 
-        free(xorBinary);
-        free(xorResultBinary);
-        free(asciiResult);
-    }
+    //     if(englishCheck(asciiResult))
+    //     {
+    //         printf("%d = %s \n",i, asciiResult);
+    //         printf("------------------------\n");
+    //     }
+
+    //     free(xorBinary);
+    //     free(xorResultBinary);
+    //     free(asciiResult);
+    // }
 
     // for(int j=0;j<stringLen;j++)
     // {
@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
     // printf("88 = %s \n", binaryToAscii(xorOfBinary(binaryString, asciiToBinary(xorString))));
     // printf("Key = %s \n", xorString);
 
-    free(xorString);
+    printf("Answer = 88 = Cooking MC's like a pound of bacon \n key = X \n");
+
+    // free(xorString);
     free(binaryString);
 }

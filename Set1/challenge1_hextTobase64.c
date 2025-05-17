@@ -21,16 +21,13 @@ int main(int argc, char* argv[])
 
     if(checkHexCanBeConvertedToBase64(argv[1])!=1)
     {
-        printf("Error - Unlcean input \n");
+        printf("Error - hex is not appropriate size \n");
         return -1;
     }
 
-    char* binary=hexadecimalToBinary(argv[1]);
-
-    char* base64=binaryToBase64(binary);
+    char* base64=hexadecimaltoBase64(argv[1]);
 
     printf("%s \n", base64);
 
     free(base64);
-    free(binary);
 }
