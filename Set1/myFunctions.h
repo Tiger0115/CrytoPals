@@ -395,9 +395,9 @@ void printProbableKeyOfSameByte(char* binaryCiphertext, int keyLength )
         char* xorResultBinary=xorOfBinary(binaryCiphertext, xorBinary);
         char* asciiResult= binaryToAscii(xorResultBinary);
 
-        if(englishCheck(asciiResult))
+        if(englishCheck(asciiResult) )
         {
-            printf("Plaintext = %s \n", asciiResult);
+            printf("Plaintext %d = %s \n", getLength(asciiResult),asciiResult);
             printf("Key = %s \n", key);
             printf("------------------------\n");
         }
@@ -487,26 +487,29 @@ int base64CharToValue(char c) {
     return -1; // Invalid character
 }
 
-char* base64ToBinary(char* input) {
+char* base64ToBinary(char* input) 
+{
+    if (input == NULL) return NULL;
+
     int len = strlen(input);
-    char* binary = malloc(len * 6 + 1); // 6 bits per base64 char
+    char* binary = malloc(len * 6 + 1); // Max possible bits (6 bits per Base64 char)
     if (!binary) {
         perror("malloc failed");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    binary[0] = '\0'; // initialize as empty string
+    int pos = 0; // current index in binary output
 
     for (int i = 0; i < len; i++) {
         int val = base64CharToValue(input[i]);
-        if (val == -1) continue; // skip invalid characters
+        if (val == -1) continue; // skip invalid/padding characters
 
         for (int bit = 5; bit >= 0; bit--) {
-            char bitChar = ((val >> bit) & 1) ? '1' : '0';
-            strncat(binary, &bitChar, 1);
+            binary[pos++] = ((val >> bit) & 1) ? '1' : '0';
         }
     }
 
+    binary[pos] = '\0'; // null-terminate the binary string
     return binary;
 }
 
@@ -526,6 +529,8 @@ int computeHammingDistanceOfBinary(char* input1, char* input2)
     return count;
 }
 
+void removeNewlinesAndPadding(char* block);
+
 int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int maxKeyLength)
 {
     double min=10000.0;
@@ -540,8 +545,12 @@ int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int
     }
 
 
-    char* block= malloc(maxKeyLength*3+1);
-    fread(block, 1, maxKeyLength*3, fptr);
+    char* block= malloc(maxKeyLength*2+2);
+    fread(block, 1, maxKeyLength*2+1, fptr);
+
+    removeNewlinesAndPadding(block);
+
+    printf("%s \n", block);
 
     for(int i=minKeyLength;i<=maxKeyLength;i++)
     {
@@ -553,14 +562,15 @@ int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int
 
         block1[i]='\0';
         block2[i]='\0';
-        // printf("%s %s \n", block1, block2);
+        printf("%s %s \n", block1, block2);
 
         char* bin1=base64ToBinary(block1);
         char* bin2=base64ToBinary(block2);
+        printf("%s %s \n", bin1, bin2);
 
         int sum=computeHammingDistanceOfBinary(bin1, bin2);
 
-        // printf("%d sum = %d\n", i, sum);
+        printf("%d sum = %d\n", i, sum);
 
         if(sum<min)
         {
@@ -581,4 +591,50 @@ int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int
     free(block);
     fclose(fptr);
     return minKeysize;
+}
+
+char* vigenereCipher(char* plaintext, char* key, int startingLocationKey)
+{
+    int len=getLength(plaintext);
+
+    char* keyString=malloc(len+1);
+    int keyLength=getLength(key);
+
+    int keyPointer =startingLocationKey;
+    for(int i=0;i<len;i++)
+    {
+        keyString[i]=key[keyPointer];
+        keyPointer=++keyPointer%keyLength;
+    }
+
+    keyString[len]='\0';
+
+    char* keyBinary= asciiToBinary(keyString);
+
+    char* lineBinary= asciiToBinary(plaintext);
+    char* xorResult= xorOfBinary(lineBinary, keyBinary);
+
+    char* hexResult= binaryToHex(xorResult);
+
+    free(xorResult);
+    free(lineBinary);
+    free(keyBinary);
+    free(keyString);
+    
+    return hexResult;
+
+}
+
+void removeNewlinesAndPadding(char* block) 
+{
+    char* src = block;
+    char* dst = block;
+
+    while (*src) {
+        if (*src != '\n') {
+            *dst++ = *src;
+        }
+        src++;
+    }
+    *dst = '\0'; // Null-terminate the resulting string
 }

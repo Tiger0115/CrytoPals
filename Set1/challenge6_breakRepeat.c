@@ -18,7 +18,6 @@ int main(int argc, char* argv[])
     // char* bin2=asciiToBinary(input2);
     // printf("%d\n", computeHammingDistanceOfBinary(bin1, bin2));
 
-    
 
     int minKeySize=findKeysizeWithSmallestHammingDistance(argv[1], 2, 40);
 
@@ -40,9 +39,14 @@ int main(int argc, char* argv[])
     
     // printf("%s len \n",fileData);
 
+    removeNewlinesAndPadding(fileData);
+    length=getLength(fileData);
+    printf("length = %d = %d\n", getLength(fileData), getLength(base64ToBinary(fileData)));
+
+
     int blocklength=(length+minKeySize)/minKeySize;
     for(int i=0;i<minKeySize;i++)
-    {
+    {   
         char* block=malloc(blocklength+1);
         int index=0;
         
@@ -50,25 +54,20 @@ int main(int argc, char* argv[])
         {
             block[index]=fileData[j];
             index++;
+            // printf("%d  ", j);
         }
+        block[index]='\0';
 
         // printf("%s \n \n", block);
 
-        char* keyString=malloc(blocklength+1);
+        // printf("Block ==== %d\n", i+1);
         
+        char* binaryBlock= base64ToBinary(block);
 
-    
-        for(int i=0;i<blocklength;i++)
-        {
-            keyString[i]=key[keyPointer];
-            // printf("%c", keyString[i]);
-            keyPointer=++keyPointer%keyLength;
-        }
-        // printf("\n %d \n", keyPointer);
-        keyString[lineLength]='\0';
-        // printf("\n%d \n", getLength(keyString));
-        char* keyBinary= asciiToBinary(keyString);
+        // printf("length %d = %d = %d\n", getLength(block), getLength(binaryBlock), getLength(binaryBlock)/6);
 
+        // printProbableKeyOfSameByte(binaryBlock, index+1/4);
+        
         free(block);
     }
 

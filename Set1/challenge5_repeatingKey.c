@@ -27,67 +27,15 @@ int main(int argc, char* argv[])
     while(fgets(line, 51, fptr))
     {
 
+        line[strcspn(line, "\n")] = '\0'; 
 
-        // i tried all kinds of things to see where i was wrong. 
-        // line[strcspn(line, "\n")] = '\0';  // if you are doing this then this is where you are going wrong
-        // line[strcspn(line, "\r")] = '\0';
-        
-
-        // printf("%d \n", getLength(line));
-        int lineLength=getLength(line);
-        // char* lineContent=malloc(lineLength);
-        // lineContent = strdup(line);  
-        char* lineContent = strdup(line);
-
-        // printf("%s \n", lineContent);
-        // lineContent[lineLength]='\0';
-
-        char* keyString=malloc(lineLength+1);
-        
-
-    
-        for(int i=0;i<lineLength;i++)
-        {
-            keyString[i]=key[keyPointer];
-            // printf("%c", keyString[i]);
-            keyPointer=++keyPointer%keyLength;
-        }
-        // printf("\n %d \n", keyPointer);
-        keyString[lineLength]='\0';
-        // printf("\n%d \n", getLength(keyString));
-        char* keyBinary= asciiToBinary(keyString);
-
-        char* lineBinary= asciiToBinary(lineContent);
-        char* xorResult= xorOfBinary(lineBinary, keyBinary);
-
-        char* hexResult= binaryToHex(xorResult);
+        char* hexResult= vigenereCipher(line, key, keyPointer);
+        keyPointer=((getLength(line)+1)%keyLength);
 
         printf("%s\n", hexResult);
-        
-        char* hexResultBinary= hexadecimalToBinary(hexResult);
-        char* hexresultAscii= binaryToAscii(hexResultBinary);
-        
-
-        // printf("result = %s \n",hexresultAscii);
-        // printf("len = %d \n", getLength(hexresultAscii));
-
-        free(hexResultBinary);
-        free(hexresultAscii);
-
-        free(lineContent);
-
-        free(lineBinary);
-        free(xorResult);
-        free(hexResult);
-        free(keyString);
-        free(keyBinary);
-       
         
     }
 
     fclose(fptr);
-
-    
     free(line);
-    // free(key);
 }
