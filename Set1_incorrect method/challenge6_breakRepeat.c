@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
     removeNewlinesAndPadding(fileData);
     length=getLength(fileData);
-    printf("length = %d = %d\n", getLength(fileData), getLength(base64ToBinary(fileData)));
+    // printf("length = %d = %d\n", getLength(fileData), getLength(base64ToBinary(fileData)));
 
 
     int blocklength=(length+minKeySize)/minKeySize;
@@ -60,13 +60,13 @@ int main(int argc, char* argv[])
 
         // printf("%s \n \n", block);
 
-        // printf("Block ==== %d\n", i+1);
+        // printf("index ==== %d\n", index);
         
         char* binaryBlock= base64ToBinary(block);
 
         // printf("length %d = %d = %d\n", getLength(block), getLength(binaryBlock), getLength(binaryBlock)/6);
 
-        // printProbableKeyOfSameByte(binaryBlock, index+1/4);
+        challenge_six(binaryBlock, getLength(block));
         
         free(block);
     }

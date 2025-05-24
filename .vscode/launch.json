@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/tiger/Desktop/Cryptopals/Set1",
-      "program": "/home/tiger/Desktop/Cryptopals/Set1/build/Debug/outDebug",
+      "cwd": "/home/tiger/Desktop/Cryptopals/Set1_incorrect method",
+      "program": "/home/tiger/Desktop/Cryptopals/Set1_incorrect method/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

@@ -148,7 +148,7 @@ char* hexadecimalToBinary(char* input)
 
 }
 
-
+char* base64ToBinary(char* input);
 
 
 
@@ -379,10 +379,21 @@ int englishCheck(char* input)
     return (printable >= total * 0.95) ? 1 : 0;
 }
 
+int checkAsciiCharExixtsInBase64(char a)
+{
+    if((int)a>=65 && (int)a<=90)
+        return 1;
+    if((int)a>=97 && (int)a<=122)
+        return 1;
+    if(a=='/' || a=='+' || a=='=')
+        return 1;
+
+    return -1;
+}
+
 void printProbableKeyOfSameByte(char* binaryCiphertext, int keyLength )
 {
     char* key=malloc(keyLength+1);
-    key[keyLength]='\0';
 
     for(int i=0;i<256;i++)
     {
@@ -390,7 +401,7 @@ void printProbableKeyOfSameByte(char* binaryCiphertext, int keyLength )
         {
             key[j]=(char)i;
         }
-
+        key[keyLength]='\0';
         char* xorBinary=asciiToBinary(key);
         char* xorResultBinary=xorOfBinary(binaryCiphertext, xorBinary);
         char* asciiResult= binaryToAscii(xorResultBinary);
@@ -550,7 +561,7 @@ int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int
 
     removeNewlinesAndPadding(block);
 
-    printf("%s \n", block);
+    // printf("%s \n", block);
 
     for(int i=minKeyLength;i<=maxKeyLength;i++)
     {
@@ -562,15 +573,15 @@ int findKeysizeWithSmallestHammingDistance(char* filename, int minKeyLength, int
 
         block1[i]='\0';
         block2[i]='\0';
-        printf("%s %s \n", block1, block2);
+        // printf("%s %s \n", block1, block2);
 
         char* bin1=base64ToBinary(block1);
         char* bin2=base64ToBinary(block2);
-        printf("%s %s \n", bin1, bin2);
+        // printf("%s %s \n", bin1, bin2);
 
         int sum=computeHammingDistanceOfBinary(bin1, bin2);
 
-        printf("%d sum = %d\n", i, sum);
+        // printf("%d sum = %d\n", i, sum);
 
         if(sum<min)
         {
@@ -637,4 +648,69 @@ void removeNewlinesAndPadding(char* block)
         src++;
     }
     *dst = '\0'; // Null-terminate the resulting string
+}
+
+int base64EnglishCheck(char* input)
+{
+    int len = strlen(input);
+    int printable = 0;
+    int total = 0;
+
+    for(int i = 0; i < len; i++)
+    {
+        char c = input[i];
+        total++;
+
+        // Acceptable characters:
+        if (isalpha(c) || isdigit(c) || isspace(c))
+        {
+            printable++;
+        }
+        else if(c=='+'|| c=='=' || c=='/')
+        {
+            continue;
+            // Reject control characters and non-printables
+            
+        }
+    }
+
+    // Require that a high percentage of characters are printable
+    return (printable >= total * 0.95) ? 1 : 0;
+}
+
+
+void challenge_six(char* binaryCiphertext, int keyLength )
+{
+    char* key=malloc(keyLength+1);
+
+    for(int i=0;i<64;i++)
+    {
+        if(checkAsciiCharExixtsInBase64((char)i)==-1)
+            continue;
+        
+        for(int j=0;j<keyLength*4   /6;j++)
+        {
+            key[j]=(char)i;
+        }
+        key[keyLength]='\0';
+        char* xorBinary=base64ToBinary(key);
+        char* xorResultBinary=xorOfBinary(binaryCiphertext, xorBinary);
+        char* asciiResult= binaryToBase64(xorResultBinary);
+
+        // printf("keybin = %d, resBin= %d, asciRes= %s \n", getLength(xorBinary), getLength(xorResultBinary), getLength(asciiResult));
+
+        if(base64EnglishCheck(asciiResult))
+        {
+            printf("binCiph= %d, keyLength= %d ,keybin = %d, resBin= %d, asciRes= %d \n", getLength(binaryCiphertext),keyLength ,getLength(xorBinary), getLength(xorResultBinary), getLength(asciiResult));
+
+            printf("Plaintext %d = %s \n", getLength(asciiResult),asciiResult);
+            printf("Key = %s \n", key);
+            printf("------------------------\n");
+        }
+
+        free(xorBinary);
+        free(xorResultBinary);
+        free(asciiResult);
+    }
+    free(key);
 }
