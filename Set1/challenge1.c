@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    char* base64=hexadecimaltoBase64(argv[1]);
+    char* base64=hexadecimalToBase64(argv[1]);
 
     printf("%s \n", base64);
 
