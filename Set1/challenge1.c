@@ -2,14 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "myFunctions.h"
 
-/*
-hextobase64.c - converts the given hexadecimal input to base64 type
+/*Sample Run From Challenge - 
+*
+*gcc challenge1.c -o hex
+*./hex 49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
+*
+*Expected Output - 
+*SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t 
+*/
 
-input - a string of hexadecimal in command line
-output - a string in base 64 format
+/*challenge1.c - converts the given hexadecimal input to base64 formate
+ *
+ *@arguments - a string of hexadecimal in command line
+ *@prints - a string in base 64 format
 */
 int main(int argc, char* argv[])
 {
