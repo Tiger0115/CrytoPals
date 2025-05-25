@@ -29,9 +29,7 @@ int main(int argc, char* argv[])
     }
 
     int length=atoi(argv[2]);
-    printf("len = %d\n", length);
-
-
+    
     fileSingleByteXorWithHex(argv[1], 60);
 
     printf("---------------------------------------------------\n");

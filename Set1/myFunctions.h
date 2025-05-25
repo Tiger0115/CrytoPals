@@ -8,10 +8,15 @@ unsigned char* hexadecimalToBase64(const char* input);
 void hexadecimalToRawBytes(const char* hexInput, unsigned char* rawBytes);
 unsigned char hexCharToByte(unsigned char c);
 void xorOfRawBytes(const unsigned char* input1, const unsigned char* input2, unsigned int len, unsigned char* result);
-void rawByteToHex(const char* byte, char* result, int byteLength);
+void rawByteToHex(const char* byte, unsigned char* result, unsigned int byteLength);
 unsigned int englishCheck(unsigned char* input, double threshold);
 void singleByteXorWithByte(unsigned char* byte, unsigned int byteLength);
 void singleByteXorWithHex(const char* input);
+void fileSingleByteXorWithHex(const char* filename, unsigned int lineSize);
+void fileRepeatingKeyXorByte(const char* filename, unsigned int lineSize, const char* key);
+int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key, unsigned int keyPointer, unsigned char* result);
+void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* result);
+unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, unsigned int repeatingKeyLength, unsigned int keyPointer);
 
 
 /*hexadecimalToBase64 - converts a char array of hexadecimal to base64 format
@@ -186,7 +191,7 @@ void xorOfRawBytes(const unsigned char* input1, const unsigned char* input2, uns
  *@note the result will be stored in the result char array.
  *      Assumption - 1)result is alloted twice the size as byte                   
 */
-void rawByteToHex(const char* byte, char* result, int byteLength)
+void rawByteToHex(const char* byte, unsigned char* result, unsigned int byteLength)
 {
     const char hex_table[]="0123456789abcdef";
     for(int i=0;i<byteLength;i++)
@@ -323,3 +328,69 @@ void fileSingleByteXorWithHex(const char* filename, unsigned int lineSize)
 
 }
 
+void fileRepeatingKeyXorByte(const char* filename, unsigned int maxLineSize, const char* key)
+{
+    FILE *fptr=fopen(filename,"r");
+    if(!fptr)
+    {
+        printf("Error in opening file\n");
+        return;
+    }
+
+    unsigned char* line=malloc(maxLineSize+2); // because there is "\n" at the end of line
+    unsigned int lineSize=maxLineSize;
+    unsigned int keyPointer=0;
+    while(fgets(line, maxLineSize+2, fptr))
+    {
+        // line[strcspn(line,"\n")]='\0';
+        lineSize=strlen(line);
+        unsigned char* result=malloc(lineSize+1);
+        
+        keyPointer=repeatingKeyXorByte(line, lineSize, key, keyPointer, result);
+        result[lineSize]='\0';
+
+        unsigned char* resultHex=malloc((lineSize*2)+1);
+        rawByteToHex(result, resultHex, lineSize);
+
+        printf("%s \n", resultHex);
+        free(resultHex);
+        free(result);
+    }
+
+    free(line);
+    fclose(fptr);
+}
+
+int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key, unsigned int keyPointer, unsigned char* result)
+{
+    unsigned char* repeatingKey=malloc(lineSize+1);
+    keyPointer=repeatingKeyMaker(key, repeatingKey, lineSize ,keyPointer);
+    repeatingKey[lineSize]='\0';
+
+    xorOfTwoByteStrings(line, repeatingKey, result);
+
+    free(repeatingKey);
+    return keyPointer;
+
+}
+
+void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* result)
+{
+    unsigned int length=strlen(byte1);
+
+    for(int i=0;i<length;i++)
+    {
+        result[i]=byte1[i] ^ byte2[i];
+    }    
+}
+
+unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, unsigned int repeatingKeyLength, unsigned int keyPointer)
+{
+    unsigned int keyLength= strlen(key);
+    for(int i=0;i<repeatingKeyLength;i++)
+    {
+        repeatingKey[i]=key[keyPointer];
+        keyPointer=(keyPointer+1)%keyLength;
+    }
+    return keyPointer;
+}
