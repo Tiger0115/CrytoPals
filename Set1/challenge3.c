@@ -4,19 +4,19 @@
 
 #include "myFunctions.h"
 
-/*Sample Run From Challenge - 
+/*Compile and Run Commands From Challenge - 
  *
  *gcc challenge3.c -o single
  *./single 1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736
  *
- *Expected Output - 
- *746865206b696420646f6e277420706c6179 
+ *Expected Answer - 
+ *Cooking MC's like a pound of bacon 
 */
 
-/*challenge3.c - 
+/*challenge3.c - a hexadecimal string is a cipher text which is xored with a single byte, this tries out all bytes to find the correct one.
  *
- *@arguments - 
- *@prints - 
+ *@arguments - takes in a char array in hexadecimal format
+ *@prints - prints all permutations of xor which pass the english check
 */
 int main(int argc, char* argv[])
 {

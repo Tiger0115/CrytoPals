@@ -4,7 +4,7 @@
 
 #include "myFunctions.h"
 
-/*Sample Run From Challenge - 
+/*Compile and Run Commands From Challenge - 
  *
  *gcc challenge2.c -o xor
  *./xor 1c0111001f010100061a024b53535009181c 686974207468652062756c6c277320657965

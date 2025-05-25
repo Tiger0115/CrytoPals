@@ -219,7 +219,8 @@ void singleByteXorWithHex(const char* input)
 }
 
 /*singleByteXorWithByte - takes a byte char array and tries to XOR all possible bytes with all characters in the array 
- *                        it performs an sanity check on the ouput using th emthod englishCheck to filter out irrelevant results
+ *                        it performs an sanity check on the ouput using the method englishCheck to filter out irrelevant results
+ *                        there is an additional check where we compare the length of result and bytelength
  *
  *@param char* byte - char array in byte format
          int byteLength - length of byte array 
@@ -240,7 +241,7 @@ void singleByteXorWithByte(unsigned char* byte, unsigned int byteLength)
 
         result[byteLength]='\0';
 
-        if(englishCheck(result, 0.99)==1)
+        if(englishCheck(result, 0.99)==1 && strlen(result)>=0.9*byteLength)
         {
             printf("Iteration= %d \t Key =%c \nResult = %s \n\n",i, (char)i, result);
         }
@@ -283,5 +284,42 @@ unsigned int englishCheck(unsigned char* input, double threshold)
         }
     }
     return (printable >= len * threshold) ? 1 : 0;
+}
+
+/*singleByteXorWithHex - takes a filepath to hexadecimal list and converts each line to byte array
+ *                       and passes it to singleByteXorWithHex to find a byte which decrypts the ciphertext.
+ *                       Tries out all combinations forall lines. 
+ *
+ *@param char* input - char array of filename and length of hexadecimal line.
+ *       
+ *@note - the result will be printed in the terminal and wont be returned. 
+ *        User has to manually select the result    
+*/
+void fileSingleByteXorWithHex(const char* filename, unsigned int lineSize)
+{
+    FILE *fptr=fopen(filename,"r");
+    if(!fptr)
+    {
+        printf("Error in opening file\n");
+        return;
+    }
+
+    unsigned char* line=malloc(lineSize+2); // because there is "\n" at the end of line
+
+    unsigned int lineNumber=1;
+    while(fgets(line, lineSize+2, fptr))
+    {
+        line[strcspn(line,"\n")]='\0';
+
+        printf("LineNumber = %d \n", lineNumber);
+
+        singleByteXorWithHex((const unsigned char*)line);
+
+        lineNumber++;
+    }
+
+    free(line);
+    fclose(fptr);
+
 }
 
