@@ -13,7 +13,7 @@ unsigned int englishCheck(unsigned char* input, double threshold);
 void singleByteXorWithByte(unsigned char* byte, unsigned int byteLength);
 void singleByteXorWithHex(const char* input);
 void fileSingleByteXorWithHex(const char* filename, unsigned int lineSize);
-void fileRepeatingKeyXorByte(const char* filename, unsigned int lineSize, const char* key);
+void fileRepeatingKeyXorByte(const char* filename, unsigned int lineSize, const char* key, unsigned int removeNewLine);
 int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key, unsigned int keyPointer, unsigned char* result);
 void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* result);
 unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, unsigned int repeatingKeyLength, unsigned int keyPointer);
@@ -295,7 +295,8 @@ unsigned int englishCheck(unsigned char* input, double threshold)
  *                       and passes it to singleByteXorWithHex to find a byte which decrypts the ciphertext.
  *                       Tries out all combinations forall lines. 
  *
- *@param char* input - char array of filename and length of hexadecimal line.
+ *@param char* filename - char array of filename 
+ *       int lineSize - length of hexadecimal line.
  *       
  *@note - the result will be printed in the terminal and wont be returned. 
  *        User has to manually select the result    
@@ -328,7 +329,18 @@ void fileSingleByteXorWithHex(const char* filename, unsigned int lineSize)
 
 }
 
-void fileRepeatingKeyXorByte(const char* filename, unsigned int maxLineSize, const char* key)
+/*fileRepeatingKeyXorByte - takes a filepath to char list and xors each line with key
+ *                          We use repeating key XOR.
+ *                          Example - if key is 'ICE', he first byte of plaintext will be XOR'd against I, the next C, the next E, then I again for the 4th byte, and so on
+ *
+ *@param char* filename - char array of filename
+ *       int maxLineSize - maximum length of line in the file
+ *       char* key - char array containing the key
+ *       int removeNewLine - flag value, should be one if '\n' needs to be removed
+ *       
+ *@note - the result will be printed in the terminal and wont be returned.     
+*/
+void fileRepeatingKeyXorByte(const char* filename, unsigned int maxLineSize, const char* key, unsigned int removeNewLine)
 {
     FILE *fptr=fopen(filename,"r");
     if(!fptr)
@@ -342,7 +354,9 @@ void fileRepeatingKeyXorByte(const char* filename, unsigned int maxLineSize, con
     unsigned int keyPointer=0;
     while(fgets(line, maxLineSize+2, fptr))
     {
-        // line[strcspn(line,"\n")]='\0';
+        if(removeNewLine==1)
+            line[strcspn(line,"\n")]='\0';
+
         lineSize=strlen(line);
         unsigned char* result=malloc(lineSize+1);
         
@@ -361,6 +375,20 @@ void fileRepeatingKeyXorByte(const char* filename, unsigned int maxLineSize, con
     fclose(fptr);
 }
 
+/*repeatingKeyXorByte - takes a plaintext as char array and xors it with key
+ *                          We use repeating key XOR.
+ *                          Example - if key is 'ICE', he first byte of plaintext will be XOR'd against I, the next C, the next E, then I again for the 4th byte, and so on
+ *
+ *@param char* line - char array of plaintext
+ *       int lineSize - length of plaintext, i.e. of line
+ *       char* key - char array containing the key
+ *       int keyPointer - index of starting point of the key, helps when there are multiple lines of plaintext but we are encypting it as a astream
+ *       char* result - empty char array which has the same size as line.
+ *
+ *@assumption - result was allocated the same memory as line
+ * 
+ *@returns the index of next key pointer 
+*/
 int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key, unsigned int keyPointer, unsigned char* result)
 {
     unsigned char* repeatingKey=malloc(lineSize+1);
@@ -374,6 +402,16 @@ int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key
 
 }
 
+/*xorOfTwoByteStrings - takes a byte char array and xors it with another byte char array
+ *
+ *@param char* byte1 - first byte char array
+ *       char* byte2 - second byte char array
+ *       char* result - empty char array which has the same size as byte1.
+ *
+ *@assumption - result was allocated the same memory as byte1
+ * 
+ *@note this function does not return anything and the xor value is stored in result.
+*/
 void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* result)
 {
     unsigned int length=strlen(byte1);
@@ -384,6 +422,15 @@ void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* re
     }    
 }
 
+/*repeatingKeyMaker - for the given key, it makes a repeating key 
+ *
+ *@param char* key - char array containing the key
+ *       char* repeatingKey - empty char array which is alloted the size of repeatingKeyLength.
+ *       int repeatingKeyLength - length of required repeating key
+ *       int keyPointer - index of starting point of the key, helps when there are multiple lines of plaintext but we are encypting it as a astream
+ * 
+ *@returns the index of next key pointer 
+*/
 unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, unsigned int repeatingKeyLength, unsigned int keyPointer)
 {
     unsigned int keyLength= strlen(key);
