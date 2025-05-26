@@ -20,18 +20,19 @@
 */
 int main(int argc, char* argv[])
 {
-    if(argc!=2)
+    if(argc!=4)
     {
         printf("Error in Argument count \n");
         return -1;
     }
 
-    unsigned char* input1="this is a test";
-    unsigned char* input2="wokka wokka!!!";
-    printf("%d\n", hammingDistanceByte(input1, input2));
+    unsigned char* input1="HU";
+    unsigned char* input2="If";
+    printf("Test Input 1 = %s \nTest Input 2 = %s\n", input1, input2);
+    printf("Hamming Distance = %d\n", hammingDistanceByte(input1, input2, 2));
 
-    free(input1);
-    free(input2);
-
+    unsigned int minKeyLength=atoi(argv[2]);
+    unsigned int maxKeyLength=atoi(argv[3]);
+    decryptVigenereCipher(argv[1], minKeyLength, maxKeyLength);
 
 }   

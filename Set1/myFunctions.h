@@ -17,6 +17,11 @@ void fileRepeatingKeyXorByte(const char* filename, unsigned int lineSize, const 
 int repeatingKeyXorByte(const char* line, unsigned int lineSize, const char* key, unsigned int keyPointer, unsigned char* result);
 void xorOfTwoByteStrings(const char* byte1, const char* byte2, unsigned char* result);
 unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, unsigned int repeatingKeyLength, unsigned int keyPointer);
+unsigned int hammingDistanceByte(unsigned char* byte1, unsigned char* byte2, unsigned int length);
+void decryptVigenereCipher(const char* filename, unsigned int minKeyLength, unsigned int maxKeyLength);
+unsigned int getMinKeyLength(const char* block, unsigned int minKeyLength, unsigned int maxKeyLength);
+void base64ToByte(const char* base64, unsigned char* byteResult, unsigned int byteResultLength);
+unsigned int base64ToIntLookUpTable(char c);
 
 
 /*hexadecimalToBase64 - converts a char array of hexadecimal to base64 format
@@ -64,7 +69,7 @@ unsigned char* hexadecimalToBase64(const char* input)
         {
             // we right shift val by 18,12,6,0, bits to take the 6 bits at a time.
             // next we perform AND operation with 0x3F (i.e. 63) to ensure that only the last 6 bits are present 
-            // in case we exceed the reamining bits, we add padding.
+            // in case we exceed the remaining bits, we add padding.
             if(k<remaining+1)
                 base64[basePointer]=base64_table[(val>>(18- 6*k)) & 0x3F];
             else
@@ -440,4 +445,207 @@ unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, uns
         keyPointer=(keyPointer+1)%keyLength;
     }
     return keyPointer;
+}
+
+unsigned int hammingDistanceByte(unsigned char* byte1, unsigned char* byte2, unsigned int length)
+{
+    unsigned int sum=0;
+
+    for(int i=0;i<length;i++)
+    {
+        //the below line works. It is inbuilt for gcc but not my logic
+        sum += __builtin_popcount(byte1[i] ^ byte2[i]);
+
+        // unsigned int temp=(unsigned int)(byte1[i] ^ byte2[i]);
+
+        // while(temp!=0)
+        // {
+        //     if(temp%2)
+        //         sum++;
+
+        //     temp>>=1;
+        // }
+    }
+
+    return sum;
+}
+
+void decryptVigenereCipher(const char* filename, unsigned int minKeyLength, unsigned int maxKeyLength)
+{
+    FILE* fptr=fopen(filename, "r");
+    if (!fptr) 
+    {
+        perror("Error opening file");
+        return;
+    }
+
+    fseek(fptr, 0, SEEK_END);
+    int length = ftell(fptr);  // Get the size
+    rewind(fptr);
+
+
+    unsigned char* block=malloc(length+1);
+    fread(block, 1, length+1, fptr);
+    block[length]='\0';
+
+    printf("block length = %d\n", strlen(block));
+    
+    unsigned int byteLength=(strlen(block)*6)/8;
+    unsigned char* block_byte=malloc(byteLength+1);
+
+    base64ToByte(block, block_byte, byteLength);
+    block_byte[byteLength]='\0';
+
+    printf("%d %s\n",strlen(block_byte), block_byte);
+    // unsigned int minKey=getMinKeyLength(block, minKeyLength, maxKeyLength);
+
+    // printf("%d\n", minKey);
+
+    free(block);
+    fclose(fptr);
+
+}
+
+unsigned int getMinKeyLength(const char* block, unsigned int minKeyLength, unsigned int maxKeyLength)
+{
+    unsigned int minHammingDist=1000;
+    unsigned int minKey=1000;
+    for(int i=minKeyLength;i<=maxKeyLength;i++)
+    {
+        unsigned char* block1=malloc(i+1);
+        unsigned char* block2=malloc(i+1);
+        
+        memcpy(block1, block, i);
+        memcpy(block2, block+i, i);
+
+        printf("%d %s %s\t", i, block1, block2);
+        
+        block1[i]='\0';
+        block2[i]='\0';
+        
+        unsigned int temp=hammingDistanceByte(block1, block2, i);
+        printf("%d\n", temp);
+        if(temp<minHammingDist)
+        {
+            minHammingDist=temp;
+            minKey=i;
+        }
+    }
+
+    return minKey;
+}
+
+void base64ToByte(const char* base64, unsigned char* byteResult, unsigned int byteResultLength)
+{
+    /*
+    This was a bit complicated to write so i am writing pseudocode - 
+
+    len= length of base64
+    index= iterator for byteResult
+    i= iterator for base64
+
+    while i<length
+        if ith element of base64 is newline 
+            then move on to next element
+        
+        set[4]= set of 4 base64 element that we need to make 3  bytes
+        count = keeps track of 4 elements
+
+        while we stay in limits
+            if the ith element of base64 is not newline
+                then count element of set is ith element of base64
+                increment count if we satisfy if condition
+
+            increment i regardless we pass if condition or not
+        
+        if count is not 4 then we had wrong number of elements
+
+        padding= the number of "=" padding characters present in set
+
+        if last or last two element are padding we count padding
+
+        val= 0 // we add 3 bytes of data to val
+        for iterating on set from 0 to 3
+            left shift val by 6 bits, initially it is 0 so makes no difference for first time. in other cases adds 6 0's
+            perform OR operation with the base64 int value of characters. as such the values are copied to last 6 bits of val..
+
+        // depending on paddig we add elements to byteResult
+        we left shift val by 16 bits to keep only the leftmost 8 bits and perform AND with 0xFF(255) to keep only the leftmost 8 bits elements
+        we left shift val by 8 bits to keep only the leftmost 16 bits and perform AND with 0xFF(255) to remove the leftmost 8 bits so we are only left with middle 8 bits
+        we left shift val by 0 bits(which doesnt change val)and perform AND with 0xFF(255) to keep only rightmost 8 bits;
+
+
+    */
+    int len=strlen(base64);
+
+    int index=0;
+    int i=0;
+    while(i<len)
+    {        
+        if(base64[i]=='\n' || base64[i]=='\r') 
+        {
+            i++;
+            // byteResult[index++]='\n';
+            continue;
+        }
+
+        char set[4];
+        int count=0;
+        
+        while(count<4 && i<len)
+        {
+            if(base64[i]!='\n' && base64[i]!='\r')
+            {
+                set[count++]=base64[i];
+            }
+            i++;
+        }
+
+        if(count<4) 
+            break;
+  
+        unsigned int padding=0;
+        
+        if (set[2] == '=' && set[3] == '=')
+            padding = 2;
+        else if (set[3] == '=')
+            padding = 1;
+
+        unsigned int val=0;
+        for(int j=0;j<4;j++)
+        {
+            val<<=6;
+            val|=base64ToIntLookUpTable(set[j]);
+        }
+
+        if(padding==0)
+        {
+            byteResult[index++]=(val>>16) & 0xFF;
+            byteResult[index++]=(val>>8) & 0xFF;
+            byteResult[index++]=(val>>0) & 0xFF;
+        }
+        else if(padding==1)
+        {
+            byteResult[index++]=(val>>16) & 0xFF;
+            byteResult[index++]=(val>>8) & 0xFF;
+        }
+        else if(padding==2)
+        {
+            byteResult[index++]=(val>>16) & 0xFF;
+        }
+        
+        
+    }
+    
+}
+
+unsigned int base64ToIntLookUpTable(char c)
+{    
+    if ('A' <= c && c <= 'Z') return (int)(c - 'A') ;
+    if ('a' <= c && c <= 'z') return (int)(c - 'a') + 26;
+    if ('0' <= c && c <= '9') return (int)(c - '0')+52;
+    if('+'==c) return 62;
+    if('/'==c) return 63;
+    if('='==c) return 0;
+    return 0;
 }
