@@ -20,9 +20,9 @@ unsigned int repeatingKeyMaker(const char* key, unsigned char* repeatingKey, uns
 unsigned int hammingDistanceByte(unsigned char* byte1, unsigned char* byte2, unsigned int length);
 void decryptVigenereCipher(const char* filename, unsigned int minKeyLength, unsigned int maxKeyLength);
 unsigned int getMinKeyLength(const char* block, unsigned int minKeyLength, unsigned int maxKeyLength);
-void base64ToByte(const char* base64, unsigned char* byteResult, unsigned int byteResultLength);
+unsigned int base64ToByte(const char* base64, unsigned char* byteResult);
 unsigned int base64ToIntLookUpTable(char c);
-
+void getEveryNmodMPosition(const char* block, unsigned char* subBlock, unsigned int blockLength, unsigned int subBlockLength, unsigned int pos, unsigned int num);
 
 /*hexadecimalToBase64 - converts a char array of hexadecimal to base64 format
  *
@@ -454,17 +454,17 @@ unsigned int hammingDistanceByte(unsigned char* byte1, unsigned char* byte2, uns
     for(int i=0;i<length;i++)
     {
         //the below line works. It is inbuilt for gcc but not my logic
-        sum += __builtin_popcount(byte1[i] ^ byte2[i]);
+        // sum += __builtin_popcount(byte1[i] ^ byte2[i]);
 
-        // unsigned int temp=(unsigned int)(byte1[i] ^ byte2[i]);
+        unsigned int temp=(unsigned int)(byte1[i] ^ byte2[i]);
 
-        // while(temp!=0)
-        // {
-        //     if(temp%2)
-        //         sum++;
+        while(temp!=0)
+        {
+            if(temp%2)
+                sum++;
 
-        //     temp>>=1;
-        // }
+            temp>>=1;
+        }
     }
 
     return sum;
@@ -485,7 +485,7 @@ void decryptVigenereCipher(const char* filename, unsigned int minKeyLength, unsi
 
 
     unsigned char* block=malloc(length+1);
-    fread(block, 1, length+1, fptr);
+    fread(block, 1, length, fptr);
     block[length]='\0';
 
     printf("block length = %d\n", strlen(block));
@@ -493,13 +493,45 @@ void decryptVigenereCipher(const char* filename, unsigned int minKeyLength, unsi
     unsigned int byteLength=(strlen(block)*6)/8;
     unsigned char* block_byte=malloc(byteLength+1);
 
-    base64ToByte(block, block_byte, byteLength);
+    byteLength=base64ToByte(block, block_byte);
     block_byte[byteLength]='\0';
 
     printf("%d %s\n",strlen(block_byte), block_byte);
-    // unsigned int minKey=getMinKeyLength(block, minKeyLength, maxKeyLength);
+    unsigned int minKey=getMinKeyLength(block_byte, minKeyLength, maxKeyLength);
 
-    // printf("%d\n", minKey);
+    printf("min key = %d\n", minKey);
+
+    unsigned int subBlockLength=(byteLength+minKey-1/minKey);
+    unsigned char* key=malloc(minKey+1);
+    for (int i = 0; i < minKey; i++) 
+    {
+        unsigned char* subBlock = malloc(subBlockLength + 1);
+        getEveryNmodMPosition(block_byte, subBlock, byteLength, subBlockLength, i, minKey);
+
+        unsigned char bestChar = 0;
+        double bestScore = 0.0;
+
+        for (int k = 0; k < 128; k++) {
+            unsigned char* result = malloc(subBlockLength + 1);
+            for (int j = 0; j < subBlockLength; j++) {
+                result[j] = subBlock[j] ^ (char)k;
+            }
+            result[subBlockLength] = '\0';
+
+            double score = englishCheck(result, 0.99);  // or your scoring function
+            if (score > bestScore) {
+                bestScore = score;
+                bestChar = (char)k;
+            }
+            free(result);
+        }
+
+        key[i] = bestChar;
+        free(subBlock);
+    }
+key[minKey] = '\0';
+printf("Recovered key: %s\n", key);
+
 
     free(block);
     fclose(fptr);
@@ -518,13 +550,13 @@ unsigned int getMinKeyLength(const char* block, unsigned int minKeyLength, unsig
         memcpy(block1, block, i);
         memcpy(block2, block+i, i);
 
-        printf("%d %s %s\t", i, block1, block2);
+        // printf("%d %s %s\t", i, block1, block2);
         
         block1[i]='\0';
         block2[i]='\0';
         
         unsigned int temp=hammingDistanceByte(block1, block2, i);
-        printf("%d\n", temp);
+        // printf("%d\n", temp);
         if(temp<minHammingDist)
         {
             minHammingDist=temp;
@@ -535,7 +567,7 @@ unsigned int getMinKeyLength(const char* block, unsigned int minKeyLength, unsig
     return minKey;
 }
 
-void base64ToByte(const char* base64, unsigned char* byteResult, unsigned int byteResultLength)
+unsigned int base64ToByte(const char* base64, unsigned char* byteResult)
 {
     /*
     This was a bit complicated to write so i am writing pseudocode - 
@@ -636,6 +668,8 @@ void base64ToByte(const char* base64, unsigned char* byteResult, unsigned int by
         
         
     }
+
+    return index;
     
 }
 
@@ -648,4 +682,17 @@ unsigned int base64ToIntLookUpTable(char c)
     if('/'==c) return 63;
     if('='==c) return 0;
     return 0;
+}
+
+void getEveryNmodMPosition(const char* block, unsigned char* subBlock, unsigned int blockLength, unsigned int subBlockLength, unsigned int pos, unsigned int num)
+{
+    int subBlockIndex=0;
+    for(int i=0;i<blockLength;i++)
+    {
+        if(i%num==pos && subBlockIndex<subBlockLength)
+        {
+            subBlock[subBlockIndex++]=block[i];
+        }
+    }
+    subBlock[subBlockIndex] = '\0';
 }
